@@ -75,8 +75,7 @@ public class CsvExportUsingJavaCsv extends TableExport {
 
     @Override
     public boolean sendConverted() {
-        return super.sendConvertedFileToUser(getTableHolder().getUI(), exportFile,
-                exportFileName, CSV_MIME_TYPE);
+        return super.sendConvertedFileToUser(exportFile, exportFileName, CSV_MIME_TYPE);
     }
 
 }

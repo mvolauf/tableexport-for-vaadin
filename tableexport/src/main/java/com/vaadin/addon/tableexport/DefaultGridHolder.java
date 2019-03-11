@@ -10,7 +10,6 @@ import com.vaadin.data.provider.Query;
 import com.vaadin.server.SerializableFunction;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.Column;
-import com.vaadin.ui.UI;
 import com.vaadin.ui.renderers.Renderer;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
@@ -79,14 +78,6 @@ public class DefaultGridHolder implements TableHolder {
             return false;
         }
         return heldGrid.getColumn((String) propertyId).isHidden();
-    }
-
-    @Override
-    public UI getUI() {
-        if (null != heldGrid) {
-            return heldGrid.getUI();
-        }
-        return UI.getCurrent();
     }
 
     @Override

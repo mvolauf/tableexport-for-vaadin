@@ -20,7 +20,7 @@
 
     <properties>
         <tableexport.version>1.8.0</tableexport.version>
-        <vaadin.version>8.2.1</vaadin.version>
+        <vaadin.version>8.7.1</vaadin.version>
         <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
         <jetty.plugin.version>9.2.3.v20140905</jetty.plugin.version>
         <project.source.version>1.8</project.source.version>
@@ -29,13 +29,13 @@
         <commons-io.version>2.2</commons-io.version>
         <apache-poi.version>3.17</apache-poi.version>
         <!-- plugins -->
-        <maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
-        <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
-        <maven-war-plugin.version>2.3</maven-war-plugin.version>
-        <maven-source-plugin.version>2.4</maven-source-plugin.version>
-        <maven-clean-plugin.version>2.6.1</maven-clean-plugin.version>
-        <maven-resources-plugin.version>2.6</maven-resources-plugin.version>
-        <maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <maven-jar-plugin.version>3.1.0</maven-jar-plugin.version>
+        <maven-war-plugin.version>3.2.2</maven-war-plugin.version>
+        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+        <maven-assembly-plugin.version>3.1.0</maven-assembly-plugin.version>
     </properties>
 
     <repositories>
@@ -78,13 +78,6 @@
             <groupId>com.vaadin.addon</groupId>
             <artifactId>tableexport-for-vaadin</artifactId>
             <version>${tableexport.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <!-- provided by the container running the application -->
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>

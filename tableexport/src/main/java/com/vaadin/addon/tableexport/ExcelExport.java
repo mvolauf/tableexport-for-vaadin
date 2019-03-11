@@ -353,7 +353,7 @@ public class ExcelExport extends TableExport {
             if (null == mimeType) {
                 setMimeType(EXCEL_MIME_TYPE);
             }
-            final boolean success = super.sendConvertedFileToUser(getTableHolder().getUI(), tempFile, exportFileName);
+            final boolean success = super.sendConvertedFileToUser(tempFile, exportFileName);
             return success;
         } catch (final IOException e) {
             LOGGER.warning("Converting to XLS failed with IOException " + e);
@@ -409,16 +409,16 @@ public class ExcelExport extends TableExport {
         titleCell.setCellStyle(titleCellStyle);
         // cell borders don't work on merged ranges so, if there are borders
         // we apply them to the merged range here.
-        if (titleCellStyle.getBorderLeft() != BorderStyle.NONE.getCode()) {
+        if (titleCellStyle.getBorderLeft() != BorderStyle.NONE) {
             RegionUtil.setBorderLeft(titleCellStyle.getBorderLeft(), cra, sheet);
         }
-        if (titleCellStyle.getBorderRight() != BorderStyle.NONE.getCode()) {
+        if (titleCellStyle.getBorderRight() != BorderStyle.NONE) {
             RegionUtil.setBorderRight(titleCellStyle.getBorderRight(), cra, sheet);
         }
-        if (titleCellStyle.getBorderTop() != BorderStyle.NONE.getCode()) {
+        if (titleCellStyle.getBorderTop() != BorderStyle.NONE) {
             RegionUtil.setBorderTop(titleCellStyle.getBorderTop(), cra, sheet);
         }
-        if (titleCellStyle.getBorderBottom() != BorderStyle.NONE.getCode()) {
+        if (titleCellStyle.getBorderBottom() != BorderStyle.NONE) {
             RegionUtil.setBorderBottom(titleCellStyle.getBorderBottom(), cra, sheet);
         }
         return 1;
@@ -730,7 +730,7 @@ public class ExcelExport extends TableExport {
              */
             for (final Row r : sheet) {
                 for (final Cell c : r) {
-                    if (c.getCellType() == Cell.CELL_TYPE_FORMULA) {
+                    if (c.getCellType() == CellType.FORMULA) {
                         evaluator.evaluateInCell(c);
                     }
                 }

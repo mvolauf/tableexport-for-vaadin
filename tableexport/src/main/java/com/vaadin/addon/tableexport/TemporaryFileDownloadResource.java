@@ -2,7 +2,6 @@ package com.vaadin.addon.tableexport;
 
 import com.vaadin.server.DownloadStream;
 import com.vaadin.server.StreamResource;
-import com.vaadin.ui.UI;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,8 +26,6 @@ public class TemporaryFileDownloadResource extends StreamResource {
     /**
      * Instantiates a new temporary file download resource.
      * 
-     * @param application
-     *            the application
      * @param fileName
      *            the file name
      * @param contentType
@@ -38,7 +35,7 @@ public class TemporaryFileDownloadResource extends StreamResource {
      * @throws FileNotFoundException
      *             the file not found exception
      */
-    public TemporaryFileDownloadResource(final UI application, final String fileName,
+    public TemporaryFileDownloadResource(final String fileName,
             final String contentType, final File tempFile) throws FileNotFoundException {
         super(new FileStreamResource(tempFile), fileName);
         this.filename = fileName;

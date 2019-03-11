@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-import com.vaadin.ui.UI;
-
 /**
  * @author thomas
  */
@@ -21,7 +19,6 @@ public interface TableHolder extends Serializable {
 
     // table delegated methods
     boolean isColumnCollapsed(Object propertyId);
-    UI getUI();
     String getColumnHeader(Object propertyId);
     boolean isExportableFormattedProperty();
     

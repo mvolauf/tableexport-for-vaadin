@@ -149,17 +149,6 @@ public class DefaultTableHolder implements TableHolder {
     }
 
     @Override
-    public UI getUI() {
-        if (null != heldTable) {
-            return heldTable.getUI();
-        }
-        if (null != heldGrid) {
-            return heldGrid.getUI();
-        }
-        return UI.getCurrent();
-    }
-
-    @Override
     public String getColumnHeader(Object propertyId) {
         if (null == heldTable) {
             if (null != heldGrid) {

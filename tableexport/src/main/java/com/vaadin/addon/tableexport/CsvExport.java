@@ -84,8 +84,7 @@ public class CsvExport extends ExcelExport {
             if (null == mimeType) {
                 setMimeType(CSV_MIME_TYPE);
             }
-            return super.sendConvertedFileToUser(getTableHolder().getUI(), tempCsvFile,
-                    exportFileName);
+            return super.sendConvertedFileToUser(tempCsvFile, exportFileName);
         } catch (final IOException e) {
             LOGGER.warning("Converting to CSV failed with IOException " + e);
             return false;

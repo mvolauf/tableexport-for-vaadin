@@ -67,24 +67,16 @@ public abstract class TableExport implements Serializable {
      * 
      * @return true, if successful
      */
-    public boolean sendConvertedFileToUser(final UI app, final File fileToExport,
-            final String exportFileName, final String mimeType) {
+    public boolean sendConvertedFileToUser(final File fileToExport, final String exportFileName, final String mimeType) {
         setMimeType(mimeType);
-        return sendConvertedFileToUser(app, fileToExport, exportFileName);
-
+        return sendConvertedFileToUser(fileToExport, exportFileName);
     }
 
-    protected boolean sendConvertedFileToUser(final UI app, final File fileToExport,
-            final String exportFileName) {
+    protected boolean sendConvertedFileToUser(final File fileToExport, final String exportFileName) {
         TemporaryFileDownloadResource resource;
         try {
-            resource =
-                    new TemporaryFileDownloadResource(app, exportFileName, mimeType, fileToExport);
-            if (null == app) {
-                UI.getCurrent().getPage().open(resource, null, false);
-            } else {
-                app.getPage().open(resource, null, false);
-            }
+            resource = new TemporaryFileDownloadResource(exportFileName, mimeType, fileToExport);
+            UI.getCurrent().getPage().open(resource, null, false);
         } catch (final FileNotFoundException e) {
             LOGGER.warning("Sending file to user failed with FileNotFoundException " + e);
             return false;

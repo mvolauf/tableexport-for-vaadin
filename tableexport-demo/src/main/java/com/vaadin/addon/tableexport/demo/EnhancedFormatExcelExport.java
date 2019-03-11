@@ -5,7 +5,7 @@ import com.vaadin.addon.tableexport.TableHolder;
 import com.vaadin.addon.tableexport.v7.DefaultTableHolder;
 import com.vaadin.v7.ui.Table;
 import org.apache.poi.hssf.usermodel.HSSFFont;
-import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
 import org.apache.poi.ss.usermodel.*;
 
 /**
@@ -43,24 +43,24 @@ public class EnhancedFormatExcelExport extends ExcelExport {
         Font f;
 
         style = this.getTitleStyle();
-        setStyle(style, HSSFColor.DARK_BLUE.index, 18, HSSFColor.WHITE.index, true,
+        setStyle(style, HSSFColorPredefined.DARK_BLUE.getIndex(), 18, HSSFColorPredefined.WHITE.getIndex(), true,
                 HorizontalAlignment.CENTER_SELECTION);
 
         style = this.getColumnHeaderStyle();
-        setStyle(style, HSSFColor.LIGHT_BLUE.index, 12, HSSFColor.BLACK.index, true,
+        setStyle(style, HSSFColorPredefined.LIGHT_BLUE.getIndex(), 12, HSSFColorPredefined.BLACK.getIndex(), true,
                 HorizontalAlignment.CENTER);
 
         style = this.getDateDataStyle();
-        setStyle(style, HSSFColor.LIGHT_CORNFLOWER_BLUE.index, 12, HSSFColor.BLACK.index, false,
+        setStyle(style, HSSFColorPredefined.LIGHT_CORNFLOWER_BLUE.getIndex(), 12, HSSFColorPredefined.BLACK.getIndex(), false,
                 HorizontalAlignment.RIGHT);
 
         style = this.getDoubleDataStyle();
-        setStyle(style, HSSFColor.LIGHT_CORNFLOWER_BLUE.index, 12, HSSFColor.BLACK.index, false,
+        setStyle(style, HSSFColorPredefined.LIGHT_CORNFLOWER_BLUE.getIndex(), 12, HSSFColorPredefined.BLACK.getIndex(), false,
                 HorizontalAlignment.RIGHT);
         this.setTotalsDoubleStyle(style);
 
         style = this.getIntegerDataStyle();
-        setStyle(style, HSSFColor.LIGHT_CORNFLOWER_BLUE.index, 12, HSSFColor.BLACK.index, false,
+        setStyle(style, HSSFColorPredefined.LIGHT_CORNFLOWER_BLUE.getIndex(), 12, HSSFColorPredefined.BLACK.getIndex(), false,
                 HorizontalAlignment.RIGHT);
         this.setTotalsIntegerStyle(style);
 
@@ -85,10 +85,10 @@ public class EnhancedFormatExcelExport extends ExcelExport {
         style.setBorderRight(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
-        style.setLeftBorderColor(HSSFColor.BLACK.index);
-        style.setRightBorderColor(HSSFColor.BLACK.index);
-        style.setTopBorderColor(HSSFColor.BLACK.index);
-        style.setBottomBorderColor(HSSFColor.BLACK.index);
+        style.setLeftBorderColor(HSSFColorPredefined.BLACK.getIndex());
+        style.setRightBorderColor(HSSFColorPredefined.BLACK.getIndex());
+        style.setTopBorderColor(HSSFColorPredefined.BLACK.getIndex());
+        style.setBottomBorderColor(HSSFColorPredefined.BLACK.getIndex());
     }
 
 }
