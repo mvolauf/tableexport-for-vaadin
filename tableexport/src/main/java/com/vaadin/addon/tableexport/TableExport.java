@@ -32,7 +32,7 @@ public abstract class TableExport implements Serializable {
         return tableHolder;
     }
 
-    public List<Object> getPropIds() {
+    public List<?> getPropIds() {
         return tableHolder.getPropIds();
     }
 

@@ -293,7 +293,7 @@ public class ExcelExport extends TableExport {
      * This should be called before convertTable() is called.
      */
     public void excludeCollapsedColumns() {
-        final Iterator<Object> iterator = getPropIds().iterator();
+        final Iterator<?> iterator = getPropIds().iterator();
         while (iterator.hasNext()) {
             final Object propId = iterator.next();
             if (getTableHolder().isColumnCollapsed(propId)) {

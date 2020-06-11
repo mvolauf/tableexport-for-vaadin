@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface TableHolder extends Serializable {
 
-    List<Object> getPropIds();
+    List<?> getPropIds();
     boolean isHierarchical();
     void setHierarchical(final boolean hierarchical);
 
