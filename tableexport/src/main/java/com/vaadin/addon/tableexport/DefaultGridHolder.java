@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 import com.vaadin.data.HasHierarchicalDataProvider;
-import com.vaadin.data.ValueProvider;
 import com.vaadin.data.provider.Query;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.Column;

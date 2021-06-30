@@ -11,7 +11,7 @@
     <groupId>com.vaadin.addon</groupId>
     <artifactId>tableexport-for-vaadin</artifactId>
     <packaging>jar</packaging>
-    <version>1.8.0-20200611-exp</version>
+    <version>1.8.0-20210630-exp</version>
     <name>TableExport</name>
 
     <organization>
@@ -20,7 +20,7 @@
     </organization>
 
     <properties>
-        <vaadin.version>8.11.0</vaadin.version>
+        <vaadin.version>8.13.1</vaadin.version>
         <jetty.plugin.version>9.2.3.v20140905</jetty.plugin.version>
         <project.source.version>1.8</project.source.version>
         <project.target.version>1.8</project.target.version>

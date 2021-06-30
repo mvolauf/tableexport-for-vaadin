@@ -1,12 +1,10 @@
 package com.vaadin.addon.tableexport;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
-
-import com.vaadin.ui.UI;
 
 public abstract class TableExport implements Serializable {
 
@@ -45,43 +43,26 @@ public abstract class TableExport implements Serializable {
     }
 
     public abstract void convertTable();
-    public abstract boolean sendConverted();
+    public abstract File writeToTempFile();
 
     /**
-     * Create and export the Table contents as some sort of file type. In the case of conversion to
-     * Excel it would be an ".xls" file containing the contents as a report. Only the export()
-     * method needs to be called. If the user wishes to manipulate the converted object to export,
-     * then convertTable() should be called separately, and, after manipulation, sendConverted().
+     * Perform the export into temporary file
+     * 
+     * @return temporary file with exported data
      */
-
-    public void export() {
+    public File exportToTempFile() {
         convertTable();
-        sendConverted();
+    	return writeToTempFile();	    	
     }
-
+    
     /**
-     * Utility method to send the converted object to the user, if it has been written to a
-     * temporary File.
+     * Create the export source
      * 
-     * Code obtained from: http://vaadin.com/forum/-/message_boards/view_message/159583
-     * 
-     * @return true, if successful
+  	 * @param onCloseCallback (optional) callback invoked after the stream was closed (just prior to temp file delete)
+     * @return stream source providing the exported data  
      */
-    public boolean sendConvertedFileToUser(final File fileToExport, final String exportFileName, final String mimeType) {
-        setMimeType(mimeType);
-        return sendConvertedFileToUser(fileToExport, exportFileName);
-    }
-
-    protected boolean sendConvertedFileToUser(final File fileToExport, final String exportFileName) {
-        TemporaryFileDownloadResource resource;
-        try {
-            resource = new TemporaryFileDownloadResource(exportFileName, mimeType, fileToExport);
-            UI.getCurrent().getPage().open(resource, null, false);
-        } catch (final FileNotFoundException e) {
-            LOGGER.warning("Sending file to user failed with FileNotFoundException " + e);
-            return false;
-        }
-        return true;
+    public TemporaryFileStreamSource createExportSource(Consumer<File> onCloseCallback) {
+        return new TemporaryFileStreamSource(this::exportToTempFile, onCloseCallback);
     }
 
     public String getExportWindow() {

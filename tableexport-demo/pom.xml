@@ -10,7 +10,7 @@
     <groupId>com.vaadin.addon</groupId>
     <artifactId>tableexport-for-vaadin-demo</artifactId>
     <packaging>war</packaging>
-    <version>1.8.0-20200611-exp</version>
+    <version>1.8.0-20210630-exp</version>
     <name>TableExport-Demo</name>
 
     <organization>
@@ -19,8 +19,8 @@
     </organization>
 
     <properties>
-        <tableexport.version>1.8.0-20200611-exp</tableexport.version>
-        <vaadin.version>8.11.0</vaadin.version>
+        <tableexport.version>1.8.0-20210630-exp</tableexport.version>
+        <vaadin.version>8.13.1</vaadin.version>
         <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
         <jetty.plugin.version>9.2.3.v20140905</jetty.plugin.version>
         <project.source.version>1.8</project.source.version>

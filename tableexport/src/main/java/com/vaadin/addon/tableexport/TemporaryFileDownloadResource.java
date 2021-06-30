@@ -4,8 +4,8 @@ import com.vaadin.server.DownloadStream;
 import com.vaadin.server.StreamResource;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The Class TemporaryFileDownloadResource.
@@ -32,21 +32,46 @@ public class TemporaryFileDownloadResource extends StreamResource {
      *            the content type
      * @param tempFile
      *            the temp file
-     * @throws FileNotFoundException
-     *             the file not found exception
      */
-    public TemporaryFileDownloadResource(final String fileName,
-            final String contentType, final File tempFile) throws FileNotFoundException {
-        super(new FileStreamResource(tempFile), fileName);
+    public TemporaryFileDownloadResource(String fileName, String contentType, Supplier<File> tempFile)  {
+    	this(fileName, contentType, tempFile, null);
+    }
+
+    /**
+     * Instantiates a new temporary file download resource.
+     * 
+     * @param fileName
+     *            the file name
+     * @param contentType
+     *            the content type
+     * @param tempFile
+     *            the temp file
+  	 * @param onCloseCallback callback invoked after the stream was closed (just prior to file delete)
+     */
+    public TemporaryFileDownloadResource(String fileName, String contentType, 
+    		Supplier<File> tempFile, Consumer<File> onCloseCallback)  {
+        this(new TemporaryFileStreamSource(tempFile, onCloseCallback), fileName, contentType);
+    }
+
+    /**
+     * Instantiates a new temporary file download resource.
+     * 
+     * 
+     * @param streamSource 
+     * @param fileName
+     *            the file name
+     * @param contentType
+     *            the content type
+     * @param tempFile
+     *            the temp file
+  	 * @param onCloseCallback callback invoked after the stream was closed (just prior to file delete)
+     */
+    public TemporaryFileDownloadResource(StreamSource streamSource, String fileName, String contentType)  {
+        super(streamSource, fileName);
         this.filename = fileName;
         this.contentType = contentType;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vaadin.terminal.StreamResource#getStream()
-     */
     @Override
     public DownloadStream getStream() {
         final DownloadStream stream =
@@ -58,42 +83,6 @@ public class TemporaryFileDownloadResource extends StreamResource {
         // ignore <=0. Set to 1s
         stream.setCacheTime(1000);
         return stream;
-    }
-
-    /**
-     * The Class FileStreamResource.
-     */
-    private static class FileStreamResource implements StreamResource.StreamSource {
-
-        /** The Constant serialVersionUID. */
-        private static final long serialVersionUID = 3801605481686085335L;
-
-        /** The input stream.
-         *  Made it transient per: https://github.com/jnash67/tableexport-for-vaadin/issues/28
-         */
-        private final transient InputStream inputStream;
-
-        /**
-         * Instantiates a new file stream resource.
-         * 
-         * @param fileToDownload
-         *            the file to download
-         * @throws FileNotFoundException
-         *             the file not found exception
-         */
-        public FileStreamResource(final File fileToDownload) throws FileNotFoundException {
-            inputStream = new DeletingFileInputStream(fileToDownload);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.vaadin.terminal.StreamResource.StreamSource#getStream()
-         */
-        @Override
-        public InputStream getStream() {
-            return inputStream;
-        }
     }
 
 }

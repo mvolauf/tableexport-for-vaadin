@@ -17,21 +17,18 @@ import org.apache.commons.io.FilenameUtils;
 import com.vaadin.addon.tableexport.CsvExport;
 import com.vaadin.addon.tableexport.DefaultGridHolder;
 import com.vaadin.addon.tableexport.ExcelExport;
-import com.vaadin.addon.tableexport.TableExport;
 import com.vaadin.addon.tableexport.TableHolder;
+import com.vaadin.addon.tableexport.TemporaryFileDownloadResource;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.data.provider.DataProvider;
-import com.vaadin.icons.VaadinIcons;
+import com.vaadin.server.FileDownloader;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Resource;
-import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.Component;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TabSheet;
@@ -40,15 +37,10 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.DateRenderer;
 import com.vaadin.ui.renderers.NumberRenderer;
-import com.vaadin.v7.data.Item;
 import com.vaadin.v7.data.Property;
 import com.vaadin.v7.data.util.BeanItemContainer;
-import com.vaadin.v7.data.util.GeneratedPropertyContainer;
-import com.vaadin.v7.data.util.ObjectProperty;
-import com.vaadin.v7.data.util.PropertyValueGenerator;
 import com.vaadin.v7.ui.CheckBox;
 import com.vaadin.v7.ui.Label;
-import com.vaadin.v7.ui.Table;
 
 @Theme("tableexport-theme")
 @Widgetset("com.vaadin.addon.tableexport.demo.TableExportWidgetset")
@@ -195,12 +187,7 @@ public class TableExportUI extends UI {
         final Button noHeaderTestButton = new Button("Andreas No Header Test");
         noHeaderTestButton.setIcon(export);
 
-        regularExportButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -73954695086117200L;
-            private ExcelExport excelExport;
-
-            @Override
-            public void buttonClick(final ClickEvent event) {
+            ExcelExport excelExport;
                 if (!"".equals(sheetNameField.getValue().toString())) {
                     if ((Boolean) exportAsCsvUsingXLS2CSVmra.getValue()) {
                         excelExport = new CsvExport(tableHolder, sheetNameField.getValue().toString());
@@ -224,15 +211,8 @@ public class TableExportUI extends UI {
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
                 excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
-                excelExport.export();
-            }
-        });
-        overriddenExportButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -73954695086117200L;
-            private ExcelExport excelExport;
-
-            @Override
-            public void buttonClick(final ClickEvent event) {
+        new FileDownloader(excelExport.getDownloadResource()).extend(regularExportButton);
+                
                 if (!"".equals(sheetNameField.getValue().toString())) {
                     if ((Boolean) exportAsCsvUsingXLS2CSVmra.getValue()) {
                         excelExport = new CsvExport(tableHolder, sheetNameField.getValue().toString());
@@ -256,15 +236,8 @@ public class TableExportUI extends UI {
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
                 excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
-                excelExport.export();
-            }
-        });
-        twoTabsExportButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -6704383486117436516L;
-            private ExcelExport excelExport;
+        new FileDownloader(excelExport.getDownloadResource()).extend(overriddenExportButton);
 
-            @Override
-            public void buttonClick(final ClickEvent event) {
                 excelExport = new ExcelExport(tableHolder, sheetNameField.getValue().toString(),
                         reportTitleField.getValue().toString(), exportFileNameField.getValue().toString(),
                         ((Boolean) totalsRowField.getValue()).booleanValue());
@@ -276,15 +249,8 @@ public class TableExportUI extends UI {
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
                 excelExport.convertTable();
                 excelExport.setNextTableHolder(tableHolder, "Second Sheet");
-                excelExport.export();
-            }
-        });
-        fontExampleExportButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -73954695086117200L;
-            private ExcelExport excelExport;
+        new FileDownloader(excelExport.getDownloadResource()).extend(twoTabsExportButton);
 
-            @Override
-            public void buttonClick(final ClickEvent event) {
                 excelExport = new FontExampleExcelExport(tableHolder, sheetNameField.getValue().toString());
                 if (!"".equals(reportTitleField.getValue().toString())) {
                     excelExport.setReportTitle(reportTitleField.getValue().toString());
@@ -296,15 +262,7 @@ public class TableExportUI extends UI {
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
                 excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
-                excelExport.export();
-            }
-        });
-        noHeaderTestButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = 9139558937906815722L;
-            private ExcelExport excelExport;
-
-            @Override
-            public void buttonClick(final ClickEvent event) {
+        new FileDownloader(excelExport.getDownloadResource()).extend(fontExampleExportButton);
                 final SimpleDateFormat expFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
                 excelExport = new ExcelExport(tableHolder, "Tätigkeiten");
                 excelExport.excludeCollapsedColumns();
@@ -313,9 +271,7 @@ public class TableExportUI extends UI {
                 // removed umlaut from file name due to Vaadin 7 bug that caused file not to get
                 // written
                 excelExport.setExportFileName("Tatigkeiten-" + expFormat.format(new Date()) + ".xls");
-                excelExport.export();
-            }
-        });
+        new FileDownloader(excelExport.getDownloadResource()).extend(noHeaderTestButton);
         mainOptions.addComponent(regularExportButton);
         mainOptions.addComponent(overriddenExportButton);
         mainOptions.addComponent(twoTabsExportButton);

@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -335,38 +336,49 @@ public class ExcelExport extends TableExport {
         finalSheetFormat();
     }
 
-    /**
-     * Export the workbook to the end-user.
-     * <p/>
-     * Code obtained from: http://vaadin.com/forum/-/message_boards/view_message/159583
-     *
-     * @return true, if successful
-     */
     @Override
-    public boolean sendConverted() {
-        File tempFile = null;
-        FileOutputStream fileOut = null;
-        try {
-            tempFile = File.createTempFile("tmp", ".xls");
-            fileOut = new FileOutputStream(tempFile);
-            workbook.write(fileOut);
-            if (null == mimeType) {
-                setMimeType(EXCEL_MIME_TYPE);
-            }
-            final boolean success = super.sendConvertedFileToUser(tempFile, exportFileName);
-            return success;
-        } catch (final IOException e) {
-            LOGGER.warning("Converting to XLS failed with IOException " + e);
-            return false;
-        } finally {
-            tempFile.deleteOnExit();
-            try {
-                fileOut.close();
-            } catch (final IOException e) {
-            }
+    public File writeToTempFile() {
+        if (null == mimeType) {
+            setMimeType(EXCEL_MIME_TYPE);
         }
+        File tempFile = null;
+        try {
+          tempFile = File.createTempFile("tmp", ".xls");
+          tempFile.deleteOnExit();
+        } catch (IOException e) {
+          LOGGER.warning("Failed to create temp file " + e);
+          return null;
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+          workbook.write(fos);
+        } catch (final IOException e) {
+          LOGGER.warning("Converting to XLS failed with IOException " + e);
+          return null;
+        }
+        return tempFile;
     }
 
+    /**
+     * Create a download resource for the export
+     * 
+     * @return download resource
+     */
+    public TemporaryFileDownloadResource getDownloadResource() {
+    	return new TemporaryFileDownloadResource(getExportFileName(), getMimeType(), this::exportToTempFile, null);
+    }
+
+    /**
+    /**
+     * Create a download resource for the export
+     * 
+  	 * @param onCloseCallback callback invoked after the stream was closed (just prior to file delete)
+     * @return download resource
+     */
+    public TemporaryFileDownloadResource getDownloadResource(Consumer<File> onCloseCallback) {
+    	return new TemporaryFileDownloadResource(getExportFileName(), getMimeType(), this::exportToTempFile, onCloseCallback);
+    }
+    
     /**
      * Initial sheet setup. Override this method to specifically change initial, sheet-wide,
      * settings.

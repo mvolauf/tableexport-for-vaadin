@@ -60,12 +60,11 @@ public class CsvExport extends ExcelExport {
         super(tableHolder, sheetName, reportTitle, exportFileName, hasTotalsRow);
     }
 
-    @Override
-    /**
-     * Convert Excel to CSV and send to user. 
-     * 
-     */
-    public boolean sendConverted() {
+    
+    public File writeToTempFile() {
+        if (null == mimeType) {
+            setMimeType(CSV_MIME_TYPE);
+        }
         File tempXlsFile, tempCsvFile;
         try {
             tempXlsFile = File.createTempFile("tmp", ".xls");
@@ -81,13 +80,10 @@ public class CsvExport extends ExcelExport {
             final XLS2CSVmra xls2csv = new XLS2CSVmra(fs, p, -1);
             xls2csv.process();
             p.close();
-            if (null == mimeType) {
-                setMimeType(CSV_MIME_TYPE);
-            }
-            return super.sendConvertedFileToUser(tempCsvFile, exportFileName);
+            return tempCsvFile;
         } catch (final IOException e) {
             LOGGER.warning("Converting to CSV failed with IOException " + e);
-            return false;
-        }
+            return null;
+        }    	
     }
 }
