@@ -18,7 +18,6 @@ import com.vaadin.addon.tableexport.CsvExport;
 import com.vaadin.addon.tableexport.DefaultGridHolder;
 import com.vaadin.addon.tableexport.ExcelExport;
 import com.vaadin.addon.tableexport.TableHolder;
-import com.vaadin.addon.tableexport.TemporaryFileDownloadResource;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
@@ -29,18 +28,16 @@ import com.vaadin.server.Resource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.TabSheet;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.DateRenderer;
 import com.vaadin.ui.renderers.NumberRenderer;
-import com.vaadin.v7.data.Property;
-import com.vaadin.v7.data.util.BeanItemContainer;
-import com.vaadin.v7.ui.CheckBox;
-import com.vaadin.v7.ui.Label;
 
 @Theme("tableexport-theme")
 @Widgetset("com.vaadin.addon.tableexport.demo.TableExportWidgetset")
@@ -51,9 +48,9 @@ public class TableExportUI extends UI {
     @WebServlet(urlPatterns = "/*", name = "TableExportUIServlet", asyncSupported = true)
     @VaadinServletConfiguration(ui = TableExportUI.class, productionMode = false)
     public static class TableExportUIServlet extends VaadinServlet {
+        private static final long serialVersionUID = 9113961084041090666L;
     }
 
-    private BeanItemContainer<PayCheck> container;
     private DataProvider<PayCheck, ?> dataProvider;
     private SimpleDateFormat sdf = new SimpleDateFormat("mm/dd/yy");
     private DecimalFormat df = new DecimalFormat("#0.0000");
@@ -91,8 +88,6 @@ public class TableExportUI extends UI {
             data.add(p4);
         } catch (final ParseException pe) {
         }
-        container = new BeanItemContainer<PayCheck>(PayCheck.class);
-        container.addAll(data);
         dataProvider = DataProvider.ofCollection(data);
 
         TabSheet componentChoice = new TabSheet();
@@ -116,7 +111,7 @@ public class TableExportUI extends UI {
         grid.setColumnOrder("name", "date", "amount", "weeks", "taxes", "manager");
 
         // put the Grid in the TableHolder after the grid is fully baked
-        final TableHolder tableHolder = new DefaultGridHolder(grid);
+        final TableHolder<PayCheck> tableHolder = new DefaultGridHolder<>(grid);
 
         grid.setWidth("650px");
         TabSheet gridOptionsTab = new TabSheet();
@@ -139,12 +134,7 @@ public class TableExportUI extends UI {
         final CheckBox totalsRowField = new CheckBox("Add Totals Row", true);
         final CheckBox rowHeadersField = new CheckBox("Treat first Column as Row Headers", true);
         final CheckBox exportAsCsvUsingXLS2CSVmra = new CheckBox("Export As CSV", false);
-        exportAsCsvUsingXLS2CSVmra.setImmediate(true);
-        exportAsCsvUsingXLS2CSVmra.addValueChangeListener(new Property.ValueChangeListener() {
-            private static final long serialVersionUID = -2031199434445240881L;
-
-            @Override
-            public void valueChange(final Property.ValueChangeEvent event) {
+        exportAsCsvUsingXLS2CSVmra.addValueChangeListener(event -> {
                 final String fn = exportFileNameField.getValue().toString();
                 final String justName = FilenameUtils.getBaseName(fn);
                 if ((Boolean) exportAsCsvUsingXLS2CSVmra.getValue()) {
@@ -153,7 +143,6 @@ public class TableExportUI extends UI {
                     exportFileNameField.setValue(justName + ".xls");
                 }
                 exportFileNameField.markAsDirty();
-            }
         });
 
         mainOptions.addComponent(headerLabel);
@@ -209,7 +198,7 @@ public class TableExportUI extends UI {
                 }
                 excelExport.setDisplayTotals(((Boolean) totalsRowField.getValue()).booleanValue());
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
-                excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
+                excelExport.setExcelFormatOfColumn("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
         new FileDownloader(excelExport.getDownloadResource()).extend(regularExportButton);
                 
@@ -234,7 +223,7 @@ public class TableExportUI extends UI {
                 }
                 excelExport.setDisplayTotals(((Boolean) totalsRowField.getValue()).booleanValue());
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
-                excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
+                excelExport.setExcelFormatOfColumn("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
         new FileDownloader(excelExport.getDownloadResource()).extend(overriddenExportButton);
 
@@ -245,7 +234,7 @@ public class TableExportUI extends UI {
                     excelExport.setExportFileName(exportFileNameField.getValue().toString());
                 }
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
-                excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
+                excelExport.setExcelFormatOfColumn("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
                 excelExport.convertTable();
                 excelExport.setNextTableHolder(tableHolder, "Second Sheet");
@@ -260,7 +249,7 @@ public class TableExportUI extends UI {
                 }
                 excelExport.setDisplayTotals(((Boolean) totalsRowField.getValue()).booleanValue());
                 excelExport.setRowHeaders(((Boolean) rowHeadersField.getValue()).booleanValue());
-                excelExport.setExcelFormatOfProperty("date", excelDateFormat.getValue().toString());
+                excelExport.setExcelFormatOfColumn("date", excelDateFormat.getValue().toString());
                 excelExport.setDoubleDataFormat(excelNumberFormat.getValue().toString());
         new FileDownloader(excelExport.getDownloadResource()).extend(fontExampleExportButton);
                 final SimpleDateFormat expFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");

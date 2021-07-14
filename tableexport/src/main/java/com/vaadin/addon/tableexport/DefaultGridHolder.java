@@ -8,137 +8,130 @@ import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 import com.vaadin.data.HasHierarchicalDataProvider;
+import com.vaadin.data.provider.HierarchicalQuery;
 import com.vaadin.data.provider.Query;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.Column;
 import com.vaadin.ui.renderers.Renderer;
 
-public class DefaultGridHolder<T> implements TableHolder {
+public class DefaultGridHolder<T> implements TableHolder<T> {
 
-    protected short defaultAlignment = HorizontalAlignment.LEFT.getCode();
+	protected short defaultAlignment = HorizontalAlignment.LEFT.getCode();
 
-    private boolean hierarchical = false;
+	private boolean hierarchical = false;
 
-    protected Grid<T> heldGrid;
-    private List<String> propIds;
+	protected Grid<T> heldGrid;
+	private List<String> columnIds;
 
-    public DefaultGridHolder(Grid<T> grid) {
-        this.heldGrid = grid;
-        this.propIds = heldGrid.getColumns().stream().map(Column::getId).collect(Collectors.toList());
-        setHierarchical(grid instanceof HasHierarchicalDataProvider);
-    }
+	public DefaultGridHolder(Grid<T> grid) {
+		this.heldGrid = grid;
+		this.columnIds = heldGrid.getColumns().stream().map(Column::getId).collect(Collectors.toList());
+		setHierarchical(grid instanceof HasHierarchicalDataProvider);
+	}
 
-    @Override
-    public List<String> getPropIds() {
-        return propIds;
-    }
+	@Override
+	public List<String> getColumnIds() {
+		return columnIds;
+	}
 
-    @Override
-    public boolean isHierarchical() {
-        return hierarchical;
-    }
+	@Override
+	public boolean isHierarchical() {
+		return hierarchical;
+	}
 
-    @Override
-    final public void setHierarchical(boolean hierarchical) {
-        this.hierarchical = hierarchical;
-    }
+	@Override
+	final public void setHierarchical(boolean hierarchical) {
+		this.hierarchical = hierarchical;
+	}
 
-    @Override
-    public Short getCellAlignment(Object propId) {
-        if (null == heldGrid) {
-            return defaultAlignment;
-        }
-        Renderer<?> renderer = getRenderer(propId);
-        if (renderer != null) {
-            if (ExcelExport.isNumeric(renderer.getPresentationType())) {
-            	return HorizontalAlignment.RIGHT.getCode();
-            }
-        }
-        return defaultAlignment;
-    }
+	@Override
+	public Short getCellAlignment(String columnId) {
+		if (null == heldGrid) {
+			return defaultAlignment;
+		}
+		Renderer<?> renderer = getRenderer(columnId);
+		if (renderer != null) {
+			if (ExcelExport.isNumeric(renderer.getPresentationType())) {
+				return HorizontalAlignment.RIGHT.getCode();
+			}
+		}
+		return defaultAlignment;
+	}
 
-    @Override
-    public boolean isGeneratedColumn(final Object propId) throws IllegalArgumentException {
-        return false;
-    }
+	@Override
+	public boolean isColumnCollapsed(String columnId) {
+		if (null == heldGrid) {
+			return false;
+		}
+		return heldGrid.getColumn(columnId).isHidden();
+	}
 
-    @Override
-    public Class<?> getPropertyTypeForGeneratedColumn(final Object propId) throws IllegalArgumentException {
-        throw new UnsupportedOperationException();
-    }
+	@Override
+	public String getColumnHeader(String columnId) {
+		if (null != heldGrid) {
+			Column<?, ?> c = getColumn(columnId);
+			return c.getCaption();
+		} else {
+			return columnId.toString();
+		}
+	}
 
-    @Override
-    public boolean isExportableFormattedProperty() {
-        return false;
-    }
+	protected Column<T, ?> getColumn(String columnId) {
+		return heldGrid.getColumn(columnId);
+	}
 
-    @Override
-    public boolean isColumnCollapsed(Object propertyId) {
-        if (null == heldGrid) {
-            return false;
-        }
-        return heldGrid.getColumn((String) propertyId).isHidden();
-    }
+	protected Renderer<?> getRenderer(String columnId) {
+		Column<T, ?> column = getColumn(columnId);
+		if (column != null) {
+			return column.getRenderer();
+		}
+		return null;
+	}
 
-    @Override
-    public String getColumnHeader(Object propertyId) {
-        if (null != heldGrid) {
-            Column<?,?> c = getColumn(propertyId);
-            return c.getCaption();
-        } else {
-            return propertyId.toString();
-        }
-    }
+	@Override
+	public Class<?> getColumnType(String columnId) {
+		Renderer<?> renderer = getRenderer(columnId);
+		if (renderer != null) {
+			return renderer.getPresentationType();
+		} else {
+			return String.class;
+		}
+	}
 
-    protected Column<T, ?> getColumn(Object propId) {
-    	return heldGrid.getColumn((String) propId);
-    }
+	@Override
+	public Object getColumnValue(T item, String columnId) {
+		return getColumn(columnId).getValueProvider().apply(item);
+	}
 
-    protected Renderer<?> getRenderer(Object propId) {
-    	Column<T, ?> column = getColumn(propId);
-    	if (column != null) {
-    		return column.getRenderer();
-    	}
-    	return null;
-    }
+	@Override
+	public Collection<T> getChildren(T rootItem) {
+		if (isHierarchical()) {
+			return ((HasHierarchicalDataProvider<T>) heldGrid).getTreeData().getChildren(rootItem);
+		} else {
+			return Collections.emptyList();
+		}
+	}
 
-    @Override
-    public Class<?> getPropertyType(Object propId) {
-        Renderer<?> renderer = getRenderer(propId);
-        if (renderer != null) {
-            return renderer.getPresentationType();
-        } else {
-            return String.class;
-        }
-    }
-
-    @Override
-    public Object getPropertyValue(Object itemId, Object propId, boolean useTableFormatPropertyValue) {
-    	return getColumn((String)propId).getValueProvider().apply((T) itemId);
-    }
-
-    @Override
-    public Collection<T> getChildren(Object rootItemId) {
-    	if (isHierarchical()) {
-    		return ((HasHierarchicalDataProvider<T>) heldGrid).getTreeData().getChildren((T)rootItemId);
-        } else {
-        	return Collections.emptyList();
-        }
-    }
-    
-    @Override
-    public Collection<T> getItemIds() {
-    	return heldGrid.getDataProvider().fetch(new Query<>(0, Integer.MAX_VALUE,
-    	          heldGrid.getDataCommunicator().getBackEndSorting(), heldGrid.getDataCommunicator().getInMemorySorting(), null)).collect(Collectors.toList());
-    }
+	@Override
+	public Collection<T> getItems() {
+		return heldGrid.getDataProvider()
+				.fetch(new Query<>(0, Integer.MAX_VALUE, heldGrid.getDataCommunicator().getBackEndSorting(),
+						heldGrid.getDataCommunicator().getInMemorySorting(), null))
+				.collect(Collectors.toList());
+	}
 
     @Override
-    public Collection<T> getRootItemIds() {
-    	if (isHierarchical()) {
-    		return ((HasHierarchicalDataProvider<T>) heldGrid).getTreeData().getRootItems();
-    	} else {
-    		return getItemIds();
-    	}
+    public int size() {
+      return heldGrid.getDataProvider().size(isHierarchical() ? new HierarchicalQuery<>(null, null) : new Query<>());
     }
+
+	@Override
+	public Collection<T> getRootItems() {
+		if (isHierarchical()) {
+			return ((HasHierarchicalDataProvider<T>) heldGrid).getTreeData().getRootItems();
+		} else {
+			return getItems();
+		}
+	}
 
 }

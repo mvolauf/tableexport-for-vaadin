@@ -11,7 +11,7 @@
     <groupId>com.vaadin.addon</groupId>
     <artifactId>tableexport-for-vaadin</artifactId>
     <packaging>jar</packaging>
-    <version>1.8.0-20210630-exp</version>
+    <version>1.8.0-20210714-exp</version>
     <name>TableExport</name>
 
     <organization>
@@ -57,12 +57,6 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-server</artifactId>
             <version>${vaadin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vaadin</groupId>
-            <artifactId>vaadin-compatibility-server</artifactId>
-            <version>${vaadin.version}</version>
-            <optional>true</optional>
         </dependency>
 
         <dependency>

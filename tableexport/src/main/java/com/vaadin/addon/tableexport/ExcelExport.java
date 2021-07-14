@@ -13,10 +13,26 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.PrintSetup;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellUtil;
 import org.apache.poi.ss.util.RegionUtil;
+import org.apache.poi.ss.util.WorkbookUtil;
 
 import com.vaadin.ui.Grid;
 
@@ -28,11 +44,9 @@ import com.vaadin.ui.Grid;
  */
 public class ExcelExport extends TableExport {
 
-    /**
-     * The Constant serialVersionUID.
-     */
     private static final long serialVersionUID = -8404407996727936497L;
-    private static final Logger LOGGER = Logger.getLogger(ExcelExport.class.getName());
+
+    private static Logger LOGGER = Logger.getLogger(ExcelExport.class.getName());
 
     /**
      * The name of the sheet in the workbook the table contents will be written to.
@@ -62,15 +76,9 @@ public class ExcelExport extends TableExport {
     protected boolean rowHeaders = false;
 
     /**
-     * Flag indicating whether we should use table.formatPropertyValue() as the cell value instead
-     * of the property value using the specified data formats.
-     */
-    protected boolean useTableFormatPropertyValue = false;
-
-    /**
      * The workbook that contains the sheet containing the report with the table contents.
      */
-    protected final Workbook workbook;
+    protected Workbook workbook;
 
     /**
      * The Sheet object that will contain the table contents report.
@@ -105,18 +113,18 @@ public class ExcelExport extends TableExport {
      */
     protected Row titleRow, headerRow, totalsRow;
     protected Row hierarchicalTotalsRow;
-    // This let's the user specify the data format of the property in case the formatting of the property
-    // will not be properly identified by the class of the property. In this case, the specified format is
+    // This let's the user specify the data format of the column in case the formatting of the column
+    // will not be properly identified by the class of the column. In this case, the specified format is
     // used.  However, all other cell stylings will be those of the
-    protected Map<Object, String> propertyExcelFormatMap = new HashMap<Object, String>();
+    protected Map<String, String> columnExcelFormatMap = new HashMap<>();
 
     /**
      * At minimum, we need a Grid to export. Everything else has default settings.
      *
      * @param grid the grid
      */
-    public ExcelExport(final Grid<?> grid) {
-        this(new DefaultGridHolder(grid), null);
+    public ExcelExport(Grid<?> grid) {
+        this(new DefaultGridHolder<>(grid), null);
     }
 
     /**
@@ -125,8 +133,8 @@ public class ExcelExport extends TableExport {
      * @param grid      the grid
      * @param sheetName the sheet name
      */
-    public ExcelExport(final Grid<?> grid, final String sheetName) {
-        this(new DefaultGridHolder(grid), sheetName, null);
+    public ExcelExport(Grid<?> grid, String sheetName) {
+        this(new DefaultGridHolder<>(grid), sheetName, null);
     }
 
     /**
@@ -136,8 +144,8 @@ public class ExcelExport extends TableExport {
      * @param sheetName   the sheet name
      * @param reportTitle the report title
      */
-    public ExcelExport(final Grid<?> grid, final String sheetName, final String reportTitle) {
-        this(new DefaultGridHolder(grid), sheetName, reportTitle, null);
+    public ExcelExport(Grid<?> grid, String sheetName, String reportTitle) {
+        this(new DefaultGridHolder<>(grid), sheetName, reportTitle, null);
     }
 
     /**
@@ -148,13 +156,13 @@ public class ExcelExport extends TableExport {
      * @param reportTitle    the report title
      * @param exportFileName the export file name
      */
-    public ExcelExport(final Grid<?> grid, final String sheetName, final String reportTitle,
-                       final String exportFileName) {
-        this(new DefaultGridHolder(grid), sheetName, reportTitle, exportFileName, true);
+    public ExcelExport(Grid<?> grid, String sheetName, String reportTitle,
+                       String exportFileName) {
+        this(new DefaultGridHolder<>(grid), sheetName, reportTitle, exportFileName, true);
     }
 
     /**
-     * Instantiates a new TableExport class. This is the final constructor that all other
+     * Instantiates a new TableExport class. This is the constructor that all other
      * constructors end up calling. If the other constructors were called then they pass in the
      * default parameters.
      *
@@ -164,14 +172,14 @@ public class ExcelExport extends TableExport {
      * @param exportFileName the export file name
      * @param hasTotalsRow   flag indicating whether we should create a totals row
      */
-    public ExcelExport(final Grid<?> grid, final String sheetName, final String reportTitle,
-                       final String exportFileName, final boolean hasTotalsRow) {
-        this(new DefaultGridHolder(grid), new HSSFWorkbook(), sheetName, reportTitle, exportFileName, hasTotalsRow);
+    public ExcelExport(Grid<?> grid, String sheetName, String reportTitle,
+                       String exportFileName, boolean hasTotalsRow) {
+        this(new DefaultGridHolder<>(grid), new HSSFWorkbook(), sheetName, reportTitle, exportFileName, hasTotalsRow);
     }
 
-    public ExcelExport(final Grid<?> grid, final Workbook wkbk, final String shtName, final String rptTitle,
-                       final String xptFileName, final boolean hasTotalsRow) {
-        this(new DefaultGridHolder(grid), wkbk, shtName, rptTitle, xptFileName, hasTotalsRow);
+    public ExcelExport(Grid<?> grid, Workbook wkbk, String shtName, String rptTitle,
+                       String xptFileName, boolean hasTotalsRow) {
+        this(new DefaultGridHolder<>(grid), wkbk, shtName, rptTitle, xptFileName, hasTotalsRow);
     }
 
     /**
@@ -179,7 +187,7 @@ public class ExcelExport extends TableExport {
      *
      * @param tableHolder the tableHolder
      */
-    public ExcelExport(final TableHolder tableHolder) {
+    public ExcelExport(TableHolder<?> tableHolder) {
         this(tableHolder, null);
     }
 
@@ -189,7 +197,7 @@ public class ExcelExport extends TableExport {
      * @param tableHolder the tableHolder
      * @param sheetName   the sheet name
      */
-    public ExcelExport(final TableHolder tableHolder, final String sheetName) {
+    public ExcelExport(TableHolder<?> tableHolder, String sheetName) {
         this(tableHolder, sheetName, null);
     }
 
@@ -200,7 +208,7 @@ public class ExcelExport extends TableExport {
      * @param sheetName   the sheet name
      * @param reportTitle the report title
      */
-    public ExcelExport(final TableHolder tableHolder, final String sheetName, final String reportTitle) {
+    public ExcelExport(TableHolder<?> tableHolder, String sheetName, String reportTitle) {
         this(tableHolder, sheetName, reportTitle, null);
     }
 
@@ -212,13 +220,13 @@ public class ExcelExport extends TableExport {
      * @param reportTitle    the report title
      * @param exportFileName the export file name
      */
-    public ExcelExport(final TableHolder tableHolder, final String sheetName, final String reportTitle,
-                       final String exportFileName) {
+    public ExcelExport(TableHolder<?> tableHolder, String sheetName, String reportTitle,
+                       String exportFileName) {
         this(tableHolder, sheetName, reportTitle, exportFileName, true);
     }
 
     /**
-     * Instantiates a new TableExport class. This is the final constructor that all other
+     * Instantiates a new TableExport class. This is the constructor that all other
      * constructors end up calling. If the other constructors were called then they pass in the
      * default parameters.
      *
@@ -228,20 +236,20 @@ public class ExcelExport extends TableExport {
      * @param exportFileName the export file name
      * @param hasTotalsRow   flag indicating whether we should create a totals row
      */
-    public ExcelExport(final TableHolder tableHolder, final String sheetName, final String reportTitle,
-                       final String exportFileName, final boolean hasTotalsRow) {
+    public ExcelExport(TableHolder<?> tableHolder, String sheetName, String reportTitle,
+                       String exportFileName, boolean hasTotalsRow) {
         this(tableHolder, new HSSFWorkbook(), sheetName, reportTitle, exportFileName, hasTotalsRow);
     }
 
-    public ExcelExport(final TableHolder tableHolder, final Workbook wkbk, final String shtName,
-                       final String rptTitle, final String xptFileName, final boolean hasTotalsRow) {
+    public ExcelExport(TableHolder<?> tableHolder, Workbook wkbk, String shtName,
+                       String rptTitle, String xptFileName, boolean hasTotalsRow) {
         super(tableHolder);
         this.workbook = wkbk;
         init(shtName, rptTitle, xptFileName, hasTotalsRow);
     }
 
-    private void init(final String shtName, final String rptTitle, final String xptFileName,
-                      final boolean hasTotalsRow) {
+    private void init(String shtName, String rptTitle, String xptFileName,
+                      boolean hasTotalsRow) {
         if ((null == shtName) || ("".equals(shtName))) {
             this.sheetName = "Table Export";
         } else {
@@ -284,9 +292,9 @@ public class ExcelExport extends TableExport {
         this.titleCellStyle = defaultTitleCellStyle(this.workbook);
     }
 
-    public void setNextTableHolder(final TableHolder tableHolder, final String sheetName) {
+    public void setNextTableHolder(TableHolder<?> tableHolder, String sheetName) {
         setTableHolder(tableHolder);
-        sheet = workbook.createSheet(sheetName);
+        sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(sheetName));
     }
 
     /*
@@ -294,10 +302,10 @@ public class ExcelExport extends TableExport {
      * This should be called before convertTable() is called.
      */
     public void excludeCollapsedColumns() {
-        final Iterator<?> iterator = getPropIds().iterator();
+        Iterator<String> iterator = getColumnIds().iterator();
         while (iterator.hasNext()) {
-            final Object propId = iterator.next();
-            if (getTableHolder().isColumnCollapsed(propId)) {
+            String columnId = iterator.next();
+            if (getTableHolder().isColumnCollapsed(columnId)) {
                 iterator.remove();
             }
         }
@@ -308,7 +316,7 @@ public class ExcelExport extends TableExport {
      */
     @Override
     public void convertTable() {
-        final int startRow;
+        int startRow;
         // initial setup
         initialSheetSetup();
 
@@ -332,14 +340,14 @@ public class ExcelExport extends TableExport {
             addTotalsRow(row, startRow);
         }
 
-        // final sheet format before export
+        // sheet format before export
         finalSheetFormat();
     }
 
     @Override
     public File writeToTempFile() {
         if (null == mimeType) {
-            setMimeType(EXCEL_MIME_TYPE);
+            setMimeType(XLS_MIME_TYPE);
         }
         File tempFile = null;
         try {
@@ -352,7 +360,7 @@ public class ExcelExport extends TableExport {
 
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
           workbook.write(fos);
-        } catch (final IOException e) {
+        } catch (IOException e) {
           LOGGER.warning("Converting to XLS failed with IOException " + e);
           return null;
         }
@@ -384,7 +392,7 @@ public class ExcelExport extends TableExport {
      * settings.
      */
     protected void initialSheetSetup() {
-        final PrintSetup printSetup = sheet.getPrintSetup();
+        PrintSetup printSetup = sheet.getPrintSetup();
         printSetup.setLandscape(true);
         sheet.setFitToPage(true);
         sheet.setHorizontallyCenter(true);
@@ -406,16 +414,16 @@ public class ExcelExport extends TableExport {
         }
         titleRow = sheet.createRow(0);
         titleRow.setHeightInPoints(45);
-        final Cell titleCell;
-        final CellRangeAddress cra;
+        Cell titleCell;
+        CellRangeAddress cra;
         if (rowHeaders) {
             titleCell = titleRow.createCell(1);
-            cra = new CellRangeAddress(0, 0, 1, getPropIds().size() - 1);
+            cra = new CellRangeAddress(0, 0, 1, getColumnIds().size() - 1);
             sheet.addMergedRegion(cra);
         } else {
             titleCell = titleRow.createCell(0);
-            cra = new CellRangeAddress(0, 0, 0, getPropIds().size() - 1);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, getPropIds().size() - 1));
+            cra = new CellRangeAddress(0, 0, 0, getColumnIds().size() - 1);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, getColumnIds().size() - 1));
         }
         titleCell.setCellValue(reportTitle);
         titleCell.setCellStyle(titleCellStyle);
@@ -443,19 +451,19 @@ public class ExcelExport extends TableExport {
      *
      * @param row the row
      */
-    protected void addHeaderRow(final int row) {
+    protected void addHeaderRow(int row) {
         headerRow = sheet.createRow(row);
         Cell headerCell;
-        Object propId;
+        String columnId;
         headerRow.setHeightInPoints(40);
-        for (int col = 0; col < getPropIds().size(); col++) {
-            propId = getPropIds().get(col);
+        for (int col = 0; col < getColumnIds().size(); col++) {
+            columnId = getColumnIds().get(col);
             headerCell = headerRow.createCell(col);
-            headerCell.setCellValue(createHelper.createRichTextString(getTableHolder().getColumnHeader(propId)
+            headerCell.setCellValue(createHelper.createRichTextString(getTableHolder().getColumnHeader(columnId)
                     .toString()));
             headerCell.setCellStyle(getColumnHeaderStyle(row, col));
 
-            final Short poiAlignment = getTableHolder().getCellAlignment(propId);
+            Short poiAlignment = getTableHolder().getCellAlignment(columnId);
             CellUtil.setAlignment(headerCell, HorizontalAlignment.forInt(poiAlignment));
         }
     }
@@ -472,7 +480,7 @@ public class ExcelExport extends TableExport {
      * @param col the current column
      * @return the header style
      */
-    protected CellStyle getColumnHeaderStyle(final int row, final int col) {
+    protected CellStyle getColumnHeaderStyle(int row, int col) {
         if ((rowHeaders) && (col == 0)) {
             return titleCellStyle;
         }
@@ -489,17 +497,17 @@ public class ExcelExport extends TableExport {
      * @param row the row
      * @return the int
      */
-    protected int addHierarchicalDataRows(final Sheet sheetToAddTo, final int row) {
-        final Collection<?> roots;
+    protected int addHierarchicalDataRows(Sheet sheetToAddTo, int row) {
+        Collection<?> roots;
         int localRow = row;
-        roots = getTableHolder().getRootItemIds();
+        roots = getTableHolder().getRootItems();
         /*
          * For Hierarchical Containers, the outlining/grouping in the sheet is with the summary row
          * at the top and the grouped/outlined subcategories below.
          */
         sheet.setRowSumsBelow(false);
         int count = 0;
-        for (final Object rootId : roots) {
+        for (Object rootId : roots) {
             count = addDataRowRecursively(sheetToAddTo, rootId, localRow);
             // for totals purposes, we just want to add rootIds which contain totals
             // so we store just the totals in a separate sheet.
@@ -536,11 +544,11 @@ public class ExcelExport extends TableExport {
      * @param row the row
      * @return the int
      */
-    protected int addDataRows(final Sheet sheetToAddTo, final int row) {
-        final Collection<?> itemIds = getTableHolder().getItemIds();
+    protected int addDataRows(Sheet sheetToAddTo, int row) {
+        Collection<?> items = getTableHolder().getItems();
         int localRow = row;
-        for (final Object itemId : itemIds) {
-            addDataRow(sheetToAddTo, itemId, localRow);
+        for (Object item : items) {
+            addDataRow(sheetToAddTo, item, localRow);
             localRow++;
         }
         return localRow;
@@ -549,16 +557,16 @@ public class ExcelExport extends TableExport {
     /**
      * Used by addHierarchicalDataRows() to implement the recursive calls.
      *
-     * @param rootItemId the root item id
+     * @param rootItem the root item
      * @param row        the row
      * @return the int
      */
-    protected int addDataRowRecursively(final Sheet sheetToAddTo, final Object rootItemId, final int row) {
+    protected <X> int addDataRowRecursively(Sheet sheetToAddTo, X rootItem, int row) {
         int numberAdded = 0;
         int localRow = row;
-        addDataRow(sheetToAddTo, rootItemId, row);
+        addDataRow(sheetToAddTo, rootItem, row);
         numberAdded++;
-        for (final Object child : getTableHolder().getChildren(rootItemId)) {
+        for (X child : ((TableHolder<X>) getTableHolder()).getChildren(rootItem)) {
             localRow++;
             numberAdded = numberAdded + addDataRowRecursively(sheetToAddTo, child, localRow);
         }
@@ -569,32 +577,33 @@ public class ExcelExport extends TableExport {
      * This method is ultimately used by either addDataRows() or addHierarchicalDataRows() to
      * actually add the data to the Sheet.
      *
-     * @param rootItemId the root item id
+     * @param rootItem the root item id
      * @param row        the row
      */
-    protected void addDataRow(final Sheet sheetToAddTo, final Object rootItemId, final int row) {
-        final Row sheetRow = sheetToAddTo.createRow(row);
-        Object propId;
+    protected <X> void addDataRow(Sheet sheetToAddTo, X rootItem, int row) {
+        Row sheetRow = sheetToAddTo.createRow(row);
+        String columnId;
         Object value;
         Class<?> valueType;
         Cell sheetCell;
-        for (int col = 0; col < getPropIds().size(); col++) {
-            propId = getPropIds().get(col);
-            value = getTableHolder().getPropertyValue(rootItemId, propId, useTableFormatPropertyValue);
-            valueType = getTableHolder().getPropertyType(propId);
+    	TableHolder<X> holder = (TableHolder<X>) getTableHolder();
+        for (int col = 0; col < getColumnIds().size(); col++) {
+            columnId = getColumnIds().get(col);
+            value = holder.getColumnValue(rootItem, columnId);
+            valueType = holder.getColumnType(columnId);
             sheetCell = sheetRow.createCell(col);
-            setupCell(sheetCell, value, valueType, propId, rootItemId, row, col);
+            setupCell(sheetCell, value, valueType, columnId, row, col);
         }
     }
 
-    protected void setupCell(Cell sheetCell, Object value, Class<?> valueType, Object propId, Object rootItemId, int row, int col) {
-        sheetCell.setCellStyle(getCellStyle(propId, rootItemId, row, col, false));
-        Short poiAlignment = getTableHolder().getCellAlignment(propId);
+    protected void setupCell(Cell sheetCell, Object value, Class<?> valueType, String columnId, int row, int col) {
+        sheetCell.setCellStyle(getCellStyle(columnId, row, col, false));
+        Short poiAlignment = getTableHolder().getCellAlignment(columnId);
         CellUtil.setAlignment(sheetCell, HorizontalAlignment.forInt(poiAlignment));
-        setCellValue(sheetCell, value, valueType, propId);
+        setCellValue(sheetCell, value, valueType, columnId);
     }
     
-	protected void setCellValue(Cell sheetCell, Object value, Class<?> valueType, Object propId) {
+	protected void setCellValue(Cell sheetCell, Object value, Class<?> valueType, String columnId) {
 		if (null != value) {
 		    if (!isNumeric(valueType)) {
 		        if (java.util.Date.class.isAssignableFrom(valueType)) {
@@ -605,9 +614,9 @@ public class ExcelExport extends TableExport {
 		    } else {
 		        try {
 		            // parse all numbers as double, the format will determine how they appear
-		            final Double d = Double.parseDouble(value.toString());
+		            Double d = Double.parseDouble(value.toString());
 		            sheetCell.setCellValue(d);
-		        } catch (final NumberFormatException nfe) {
+		        } catch (NumberFormatException nfe) {
 		            LOGGER.warning("NumberFormatException parsing a numeric value: " + nfe);
 		            sheetCell.setCellValue(createHelper.createRichTextString(value.toString()));
 		        }
@@ -615,11 +624,11 @@ public class ExcelExport extends TableExport {
 		}
 	}
 
-    public void setExcelFormatOfProperty(final Object propertyId, final String excelFormat) {
-        if (this.propertyExcelFormatMap.containsKey(propertyId)) {
-            this.propertyExcelFormatMap.remove(propertyId);
+    public void setExcelFormatOfColumn(String columnId, String excelFormat) {
+        if (this.columnExcelFormatMap.containsKey(columnId)) {
+            this.columnExcelFormatMap.remove(columnId);
         }
-        this.propertyExcelFormatMap.put(propertyId.toString(), excelFormat);
+        this.columnExcelFormatMap.put(columnId, excelFormat);
     }
 
     /**
@@ -630,13 +639,12 @@ public class ExcelExport extends TableExport {
      * potentially relevant items that may be used to determine what formatting to return, that are
      * not accessible globally.
      *
-     * @param propId     the property id
-     * @param rootItemId the root item id
+     * @param columnId     the column id
      * @param row        the row
      * @param col        the col
      * @return the data style
      */
-    protected CellStyle getCellStyle(final Object propId, final Object rootItemId, final int row, final int col, final boolean totalsRow) {
+    protected CellStyle getCellStyle(String columnId, int row, int col, boolean totalsRow) {
         // get the basic style for the type of cell (i.e. data, header, total)
         if ((rowHeaders) && (col == 0)) {
             if (null == rowHeaderCellStyle) {
@@ -644,40 +652,40 @@ public class ExcelExport extends TableExport {
             }
             return rowHeaderCellStyle;
         }
-        final Class<?> propType = getTableHolder().getPropertyType(propId);
+        Class<?> columnType = getTableHolder().getColumnType(columnId);
         if (totalsRow) {
-            if (this.propertyExcelFormatMap.containsKey(propId)) {
-                final short df = dataFormat.getFormat(propertyExcelFormatMap.get(propId));
-                final CellStyle customTotalStyle = workbook.createCellStyle();
+            if (this.columnExcelFormatMap.containsKey(columnId)) {
+                short df = dataFormat.getFormat(columnExcelFormatMap.get(columnId));
+                CellStyle customTotalStyle = workbook.createCellStyle();
                 customTotalStyle.cloneStyleFrom(totalsDoubleCellStyle);
                 customTotalStyle.setDataFormat(df);
                 return customTotalStyle;
             }
-            if (isIntegerLongShortOrBigDecimal(propType)) {
+            if (isIntegerLongShortOrBigDecimal(columnType)) {
                 return totalsIntegerCellStyle;
             }
             return totalsDoubleCellStyle;
         }
         // Check if the user has over-ridden that data format of this property
-        if (this.propertyExcelFormatMap.containsKey(propId)) {
-            final short df = dataFormat.getFormat(propertyExcelFormatMap.get(propId));
+        if (this.columnExcelFormatMap.containsKey(columnId)) {
+            short df = dataFormat.getFormat(columnExcelFormatMap.get(columnId));
             if (dataFormatCellStylesMap.containsKey(df)) {
                 return dataFormatCellStylesMap.get(df);
             }
             // if it hasn't already been created for re-use, we create a cell style and override the data format
             // For data cells, each data format corresponds to a single complete cell style
-            final CellStyle retStyle = workbook.createCellStyle();
+            CellStyle retStyle = workbook.createCellStyle();
             retStyle.cloneStyleFrom(dataFormatCellStylesMap.get(doubleDataFormat));
             retStyle.setDataFormat(df);
             dataFormatCellStylesMap.put(df, retStyle);
             return retStyle;
         }
         // if not over-ridden, use the overall setting
-        if (isDoubleOrFloat(propType)) {
+        if (isDoubleOrFloat(columnType)) {
             return dataFormatCellStylesMap.get(doubleDataFormat);
-        } else if (isIntegerLongShortOrBigDecimal(propType)) {
+        } else if (isIntegerLongShortOrBigDecimal(columnType)) {
             return dataFormatCellStylesMap.get(integerDataFormat);
-        } else if (java.util.Date.class.isAssignableFrom(propType)) {
+        } else if (java.util.Date.class.isAssignableFrom(columnType)) {
             return dataFormatCellStylesMap.get(dateDataFormat);
         }
         return dataFormatCellStylesMap.get(doubleDataFormat);
@@ -692,23 +700,23 @@ public class ExcelExport extends TableExport {
      * @param currentRow the current row
      * @param startRow   the start row
      */
-    protected void addTotalsRow(final int currentRow, final int startRow) {
+    protected void addTotalsRow(int currentRow, int startRow) {
         totalsRow = sheet.createRow(currentRow);
         totalsRow.setHeightInPoints(30);
         Cell cell;
-        for (int col = 0; col < getPropIds().size(); col++) {
-            final Object propId = getPropIds().get(col);
+        for (int col = 0; col < getColumnIds().size(); col++) {
+            String columnId = getColumnIds().get(col);
             cell = totalsRow.createCell(col);
-            setupTotalCell(cell, propId, currentRow, startRow, col);
+            setupTotalCell(cell, columnId, currentRow, startRow, col);
         }
     }
 
-	protected void setupTotalCell(Cell cell, final Object propId, final int currentRow, final int startRow, int col) {
-		cell.setCellStyle(getCellStyle(propId, currentRow, startRow, col, true));
-		Short poiAlignment = getTableHolder().getCellAlignment(propId);
+	protected void setupTotalCell(Cell cell, String columnId, int currentRow, int startRow, int col) {
+		cell.setCellStyle(getCellStyle(columnId, startRow, col, true));
+		Short poiAlignment = getTableHolder().getCellAlignment(columnId);
 		CellUtil.setAlignment(cell, HorizontalAlignment.forInt(poiAlignment));
-		Class<?> propType = getTableHolder().getPropertyType(propId);
-		if (isNumeric(propType)) {
+		Class<?> columnType = getTableHolder().getColumnType(columnId);
+		if (isNumeric(columnType)) {
 			CellRangeAddress cra = new CellRangeAddress(startRow, currentRow - 1, col, col);
 		    if (isHierarchical()) {
 		        // 9 & 109 are for sum. 9 means include hidden cells, 109 means exclude.
@@ -721,18 +729,22 @@ public class ExcelExport extends TableExport {
 		    }
 		} else {
 		    if (0 == col) {
-		        cell.setCellValue(createHelper.createRichTextString("Total"));
+		        cell.setCellValue(createHelper.createRichTextString(getTotalHeader()));
 		    }
 		}
 	}
 
+	protected String getTotalHeader() {
+		return "Total";
+	}
+	
     /**
-     * Final formatting of the sheet upon completion of writing the data. For example, we can only
+     * formatting of the sheet upon completion of writing the data. For example, we can only
      * size the column widths once the data is in the report and the sheet knows how wide the data
      * is.
      */
     protected void finalSheetFormat() {
-        final FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
         if (isHierarchical()) {
             /*
              * evaluateInCell() is equivalent to paste special -> value. The formula refers to cells
@@ -740,8 +752,8 @@ public class ExcelExport extends TableExport {
              * summed in the main sheet, we would double count. Subtotal with hidden rows is not yet
              * implemented in POI.
              */
-            for (final Row r : sheet) {
-                for (final Cell c : r) {
+            for (Row r : sheet) {
+                for (Cell c : r) {
                     if (c.getCellType() == CellType.FORMULA) {
                         evaluator.evaluateInCell(c);
                     }
@@ -754,7 +766,7 @@ public class ExcelExport extends TableExport {
         } else {
             evaluator.evaluateAll();
         }
-        for (int col = 0; col < getPropIds().size(); col++) {
+        for (int col = 0; col < getColumnIds().size(); col++) {
             sheet.autoSizeColumn(col);
         }
     }
@@ -766,9 +778,9 @@ public class ExcelExport extends TableExport {
      * @param wb the wb
      * @return the cell style
      */
-    protected CellStyle defaultTitleCellStyle(final Workbook wb) {
+    protected CellStyle defaultTitleCellStyle(Workbook wb) {
         CellStyle style;
-        final Font titleFont = wb.createFont();
+        Font titleFont = wb.createFont();
         titleFont.setFontHeightInPoints((short) 18);
         titleFont.setBold(true);
         style = wb.createCellStyle();
@@ -785,9 +797,9 @@ public class ExcelExport extends TableExport {
      * @param wb the wb
      * @return the cell style
      */
-    protected CellStyle defaultHeaderCellStyle(final Workbook wb) {
+    protected CellStyle defaultHeaderCellStyle(Workbook wb) {
         CellStyle style;
-        final Font monthFont = wb.createFont();
+        Font monthFont = wb.createFont();
         monthFont.setFontHeightInPoints((short) 11);
         monthFont.setColor(IndexedColors.WHITE.getIndex());
         style = wb.createCellStyle();
@@ -807,7 +819,7 @@ public class ExcelExport extends TableExport {
      * @param wb the wb
      * @return the cell style
      */
-    protected CellStyle defaultDataCellStyle(final Workbook wb) {
+    protected CellStyle defaultDataCellStyle(Workbook wb) {
         CellStyle style;
         style = wb.createCellStyle();
         style.setAlignment(HorizontalAlignment.CENTER);
@@ -831,7 +843,7 @@ public class ExcelExport extends TableExport {
      * @param wb the wb
      * @return the cell style
      */
-    protected CellStyle defaultTotalsDoubleCellStyle(final Workbook wb) {
+    protected CellStyle defaultTotalsDoubleCellStyle(Workbook wb) {
         CellStyle style;
         style = wb.createCellStyle();
         style.setAlignment(HorizontalAlignment.CENTER);
@@ -849,7 +861,7 @@ public class ExcelExport extends TableExport {
      * @param wb the wb
      * @return the cell style
      */
-    protected CellStyle defaultTotalsIntegerCellStyle(final Workbook wb) {
+    protected CellStyle defaultTotalsIntegerCellStyle(Workbook wb) {
         CellStyle style;
         style = wb.createCellStyle();
         style.setAlignment(HorizontalAlignment.CENTER);
@@ -860,19 +872,19 @@ public class ExcelExport extends TableExport {
         return style;
     }
 
-    protected short defaultDoubleDataFormat(final Workbook wb) {
+    protected short defaultDoubleDataFormat(Workbook wb) {
         return createHelper.createDataFormat().getFormat("0.00");
     }
 
-    protected short defaultIntegerDataFormat(final Workbook wb) {
+    protected short defaultIntegerDataFormat(Workbook wb) {
         return createHelper.createDataFormat().getFormat("0");
     }
 
-    protected short defaultDateDataFormat(final Workbook wb) {
+    protected short defaultDateDataFormat(Workbook wb) {
         return createHelper.createDataFormat().getFormat("mm/dd/yyyy");
     }
 
-    public void setDoubleDataFormat(final String excelDoubleFormat) {
+    public void setDoubleDataFormat(String excelDoubleFormat) {
         CellStyle prevDoubleDataStyle = null;
         if (dataFormatCellStylesMap.containsKey(doubleDataFormat)) {
             prevDoubleDataStyle = dataFormatCellStylesMap.get(doubleDataFormat);
@@ -886,7 +898,7 @@ public class ExcelExport extends TableExport {
         }
     }
 
-    public void setIntegerDataFormat(final String excelIntegerFormat) {
+    public void setIntegerDataFormat(String excelIntegerFormat) {
         CellStyle prevIntegerDataStyle = null;
         if (dataFormatCellStylesMap.containsKey(integerDataFormat)) {
             prevIntegerDataStyle = dataFormatCellStylesMap.get(integerDataFormat);
@@ -900,7 +912,7 @@ public class ExcelExport extends TableExport {
         }
     }
 
-    public void setDateDataFormat(final String excelDateFormat) {
+    public void setDateDataFormat(String excelDateFormat) {
         CellStyle prevDateDataStyle = null;
         if (dataFormatCellStylesMap.containsKey(dateDataFormat)) {
             prevDateDataStyle = dataFormatCellStylesMap.get(dateDataFormat);
@@ -920,7 +932,7 @@ public class ExcelExport extends TableExport {
      * @param type the type
      * @return true, if is numeric
      */
-    public static boolean isNumeric(final Class<?> type) {
+    public static boolean isNumeric(Class<?> type) {
         if (isIntegerLongShortOrBigDecimal(type)) {
             return true;
         }
@@ -939,7 +951,7 @@ public class ExcelExport extends TableExport {
      * @param type the type
      * @return true, if is integer-like
      */
-    public static boolean isIntegerLongShortOrBigDecimal(final Class<?> type) {
+    public static boolean isIntegerLongShortOrBigDecimal(Class<?> type) {
         if ((Integer.class.equals(type) || (int.class.equals(type)))) {
             return true;
         }
@@ -961,7 +973,7 @@ public class ExcelExport extends TableExport {
      * @param type the type
      * @return true, if is double-like
      */
-    public static boolean isDoubleOrFloat(final Class<?> type) {
+    public static boolean isDoubleOrFloat(Class<?> type) {
         if ((Double.class.equals(type)) || (double.class.equals(type))) {
             return true;
         }
@@ -1052,7 +1064,7 @@ public class ExcelExport extends TableExport {
      *
      * @param reportTitle the new report title
      */
-    public void setReportTitle(final String reportTitle) {
+    public void setReportTitle(String reportTitle) {
         this.reportTitle = reportTitle;
     }
 
@@ -1061,7 +1073,7 @@ public class ExcelExport extends TableExport {
      *
      * @param exportFileName the new export file name
      */
-    public void setExportFileName(final String exportFileName) {
+    public void setExportFileName(String exportFileName) {
         this.exportFileName = exportFileName;
     }
 
@@ -1070,7 +1082,7 @@ public class ExcelExport extends TableExport {
      *
      * @param doubleDataStyle the new data style
      */
-    public void setDoubleDataStyle(final CellStyle doubleDataStyle) {
+    public void setDoubleDataStyle(CellStyle doubleDataStyle) {
         this.doubleCellStyle = doubleDataStyle;
     }
 
@@ -1079,7 +1091,7 @@ public class ExcelExport extends TableExport {
      *
      * @param integerDataStyle the new data style
      */
-    public void setIntegerDataStyle(final CellStyle integerDataStyle) {
+    public void setIntegerDataStyle(CellStyle integerDataStyle) {
         this.integerCellStyle = integerDataStyle;
     }
 
@@ -1088,7 +1100,7 @@ public class ExcelExport extends TableExport {
      *
      * @param dateDataStyle the new data style
      */
-    public void setDateDataStyle(final CellStyle dateDataStyle) {
+    public void setDateDataStyle(CellStyle dateDataStyle) {
         this.dateCellStyle = dateDataStyle;
     }
 
@@ -1097,7 +1109,7 @@ public class ExcelExport extends TableExport {
      *
      * @param columnHeaderStyle CellStyle
      */
-    public void setColumnHeaderStyle(final CellStyle columnHeaderStyle) {
+    public void setColumnHeaderStyle(CellStyle columnHeaderStyle) {
         this.columnHeaderCellStyle = columnHeaderStyle;
     }
 
@@ -1106,7 +1118,7 @@ public class ExcelExport extends TableExport {
      *
      * @param titleStyle the new title style
      */
-    public void setTitleStyle(final CellStyle titleStyle) {
+    public void setTitleStyle(CellStyle titleStyle) {
         this.titleCellStyle = titleStyle;
     }
 
@@ -1151,7 +1163,7 @@ public class ExcelExport extends TableExport {
      *
      * @param totalsDoubleStyle the new totals style
      */
-    public void setTotalsDoubleStyle(final CellStyle totalsDoubleStyle) {
+    public void setTotalsDoubleStyle(CellStyle totalsDoubleStyle) {
         this.totalsDoubleCellStyle = totalsDoubleStyle;
     }
 
@@ -1169,7 +1181,7 @@ public class ExcelExport extends TableExport {
      *
      * @param totalsIntegerStyle the new totals style
      */
-    public void setTotalsIntegerStyle(final CellStyle totalsIntegerStyle) {
+    public void setTotalsIntegerStyle(CellStyle totalsIntegerStyle) {
         this.totalsIntegerCellStyle = totalsIntegerStyle;
     }
 
@@ -1187,12 +1199,8 @@ public class ExcelExport extends TableExport {
      *
      * @param displayTotals boolean
      */
-    public void setDisplayTotals(final boolean displayTotals) {
+    public void setDisplayTotals(boolean displayTotals) {
         this.displayTotals = displayTotals;
-    }
-
-    public void setUseTableFormatPropertyValue(final boolean useFormatPropertyValue) {
-        this.useTableFormatPropertyValue = useFormatPropertyValue;
     }
 
     /**
@@ -1218,7 +1226,7 @@ public class ExcelExport extends TableExport {
      *
      * @param rowHeaders boolean
      */
-    public void setRowHeaders(final boolean rowHeaders) {
+    public void setRowHeaders(boolean rowHeaders) {
         this.rowHeaders = rowHeaders;
     }
 
@@ -1227,7 +1235,7 @@ public class ExcelExport extends TableExport {
      *
      * @param rowHeaderStyle CellStyle
      */
-    public void setRowHeaderStyle(final CellStyle rowHeaderStyle) {
+    public void setRowHeaderStyle(CellStyle rowHeaderStyle) {
         this.rowHeaderCellStyle = rowHeaderStyle;
     }
 

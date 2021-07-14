@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.*;
 public class FontExampleExcelExport extends ExcelExport {
     private static final long serialVersionUID = 3717947558186318581L;
 
-    public FontExampleExcelExport(final TableHolder tableHolder, final String sheetName) {
+    public FontExampleExcelExport(final TableHolder<?> tableHolder, final String sheetName) {
         super(tableHolder, sheetName);
         format();
     }
@@ -79,7 +79,7 @@ public class FontExampleExcelExport extends ExcelExport {
         style = this.getDoubleDataStyle();
         style.setFillForegroundColor(HSSFColorPredefined.WHITE.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        f = workbook.getFontAt(style.getFontIndex());
+        f = workbook.getFontAt(style.getFontIndexAsInt());
         f.setFontHeightInPoints((short) 12);
         f.setFontName(HSSFFont.FONT_ARIAL);
         f.setColor(HSSFColorPredefined.BLACK.getIndex());
@@ -98,7 +98,7 @@ public class FontExampleExcelExport extends ExcelExport {
         style = this.getIntegerDataStyle();
         style.setFillForegroundColor(HSSFColorPredefined.WHITE.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        f = workbook.getFontAt(style.getFontIndex());
+        f = workbook.getFontAt(style.getFontIndexAsInt());
         f.setFontHeightInPoints((short) 12);
         f.setFontName(HSSFFont.FONT_ARIAL);
         f.setColor(HSSFColorPredefined.BLACK.getIndex());

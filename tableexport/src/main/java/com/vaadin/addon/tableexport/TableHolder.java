@@ -7,29 +7,30 @@ import java.util.List;
 /**
  * @author thomas
  */
-public interface TableHolder extends Serializable {
+public interface TableHolder<T> extends Serializable {
 
-    List<?> getPropIds();
+    List<String> getColumnIds();
+
+    String getColumnHeader(String columnId);
+
+    Short getCellAlignment(String columnId);
+
+    boolean isColumnCollapsed(String columnId);
+    
+    Class<?> getColumnType(String columnId);
+
+    Object getColumnValue(T item, String columnId);
+    
+    Collection<T> getItems();
+
+    int size();
+
     boolean isHierarchical();
+
     void setHierarchical(final boolean hierarchical);
 
-    Short getCellAlignment(Object propId);
-    boolean isGeneratedColumn(final Object propId) throws IllegalArgumentException;
-    Class<?> getPropertyTypeForGeneratedColumn(final Object propId) throws IllegalArgumentException;
-
-    // table delegated methods
-    boolean isColumnCollapsed(Object propertyId);
-    String getColumnHeader(Object propertyId);
-    boolean isExportableFormattedProperty();
+    Collection<T> getChildren(T rootItem);
     
-    Class<?> getPropertyType(Object propId);
-
-    Object getPropertyValue(Object itemId, Object propId, boolean useTableFormatPropertyValue);
-
-    Collection<?> getChildren(Object rootItemId);
+    Collection<T> getRootItems();
     
-    Collection<?> getItemIds();
-
-    Collection<?> getRootItemIds();
-
 }

@@ -17,11 +17,11 @@ public class EnhancedFormatExcelExport extends ExcelExport {
      */
     private static final long serialVersionUID = 9113961084041090666L;
 
-    public EnhancedFormatExcelExport(final TableHolder tableHolder) {
+    public EnhancedFormatExcelExport(final TableHolder<?> tableHolder) {
         this(tableHolder, "Enhanced Export");
     }
 
-    public EnhancedFormatExcelExport(final TableHolder tableHolder, final String sheetName) {
+    public EnhancedFormatExcelExport(final TableHolder<?> tableHolder, final String sheetName) {
         super(tableHolder, sheetName);
         format();
     }
@@ -29,7 +29,6 @@ public class EnhancedFormatExcelExport extends ExcelExport {
     private void format() {
         this.setRowHeaders(true);
         CellStyle style;
-        Font f;
 
         style = this.getTitleStyle();
         setStyle(style, HSSFColorPredefined.DARK_BLUE.getIndex(), 18, HSSFColorPredefined.WHITE.getIndex(), true,
@@ -64,7 +63,7 @@ public class EnhancedFormatExcelExport extends ExcelExport {
                           boolean isBold, HorizontalAlignment alignment) {
         style.setFillForegroundColor(foregroundColor);
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        Font f = workbook.getFontAt(style.getFontIndex());
+        Font f = workbook.getFontAt(style.getFontIndexAsInt());
         f.setFontHeightInPoints((short) fontHeight);
         f.setFontName(HSSFFont.FONT_ARIAL);
         f.setColor(fontColor);
