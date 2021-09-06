@@ -488,6 +488,15 @@ public class ExcelExport extends TableExport {
     }
 
     /**
+     * Returns a collection of the root items for a hierarchical export.
+     *
+     * @return a collection of the root items
+     */
+    protected Collection<?> getRootItems() {
+        return getTableHolder().getRootItems();
+    }
+
+    /**
      * For Hierarchical Containers, this method recursively adds root items and child items. The
      * child items are appropriately grouped using grouping/outlining sheet functionality. Override
      * this method to make any changes. To change the CellStyle used for all Table data use
@@ -498,9 +507,8 @@ public class ExcelExport extends TableExport {
      * @return the int
      */
     protected int addHierarchicalDataRows(Sheet sheetToAddTo, int row) {
-        Collection<?> roots;
+        Collection<?> roots = getRootItems();
         int localRow = row;
-        roots = getTableHolder().getRootItems();
         /*
          * For Hierarchical Containers, the outlining/grouping in the sheet is with the summary row
          * at the top and the grouped/outlined subcategories below.
